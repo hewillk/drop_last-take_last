@@ -112,4 +112,7 @@ class drop_last_view : public view_interface<drop_last_view<V>> {
 
 template<class R>
 drop_last_view(R&&, range_difference_t<R>) -> drop_last_view<views::all_t<R>>;
+
+template<class T>
+constexpr bool enable_borrowed_range<drop_last_view<T>> = enable_borrowed_range<T>;
 }  // namespace std::ranges
