@@ -43,7 +43,9 @@ class drop_last_view : public view_interface<drop_last_view<V>> {
         const auto n = std::min(sz, count_);
         return std::counted_iterator(ranges::begin(base_), sz - n);
       }
-    } else
+    } else if constexpr (bidirectional_range<V> && common_range<V>)
+      return ranges::begin(base_);
+    else
       return iterator(ranges::begin(base_),
                       ranges::next(ranges::begin(base_), count_, ranges::end(base_)));
   }
@@ -72,7 +74,9 @@ class drop_last_view : public view_interface<drop_last_view<V>> {
         return ranges::next(ranges::begin(base_), sz - n);
       } else
         return std::default_sentinel;
-    } else
+    } else if constexpr (bidirectional_range<V> && common_range<V>)
+      return ranges::prev(ranges::end(base_), count_, ranges::begin(base_));
+    else
       return sentinel(ranges::end(base_));
   }
 
