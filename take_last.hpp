@@ -102,4 +102,7 @@ class take_last_view : public view_interface<take_last_view<V>> {
 
 template<class R>
 take_last_view(R&&, range_difference_t<R>) -> take_last_view<views::all_t<R>>;
+
+template<class T>
+constexpr bool enable_borrowed_range<take_last_view<T>> = enable_borrowed_range<T>;
 }  // namespace std::ranges
