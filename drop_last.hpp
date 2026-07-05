@@ -8,8 +8,7 @@ class drop_last_view : public view_interface<drop_last_view<V>> {
   V base_ = V();                     // exposition only
   range_difference_t<V> count_ = 0;  // exposition only
 
-  class iterator;
-  class sentinel;
+  class iterator;    // exposition only
 
  public:
   drop_last_view()
@@ -77,7 +76,7 @@ class drop_last_view : public view_interface<drop_last_view<V>> {
     } else if constexpr (bidirectional_range<V> && common_range<V>)
       return ranges::prev(ranges::end(base_), count_, ranges::begin(base_));
     else
-      return sentinel(ranges::end(base_));
+      return ranges::end(base_);
   }
 
   constexpr auto
