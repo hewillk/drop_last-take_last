@@ -44,15 +44,14 @@ class take_last_view : public view_interface<take_last_view<V>> {
     } else if constexpr (bidirectional_range<V> && common_range<V>) {
       return ranges::prev(ranges::end(base_), count_, ranges::begin(base_));
     } else {
-      const auto end = ranges::end(base_);
-      auto slow = ranges::begin(base_);
-      auto fast = ranges::next(slow, count_, end);
-      while (fast != end) {
-        ++slow;
-        ++fast;
+      auto it = ranges::begin(base_);
+      auto probe = ranges::next(it, count_, ranges::end(base_));
+      while (probe != ranges::end(base_)) {
+        ++it;
+        ++probe;
       }
-      /* Theoretically, fast here can be used as the return for end() */
-      return slow;
+      /* Theoretically, probe here can be used as the return for end() */
+      return it;
     }
   }
 
@@ -68,7 +67,7 @@ class take_last_view : public view_interface<take_last_view<V>> {
   constexpr auto
   end() {
     /*
-      If end() relies on the fast cache calculated by begin(): When v.end() is called first,
+      If end() relies on the probe cache calculated by begin(): When v.end() is called first,
       begin()  hasn't executed yet, and the cache is either empty。 In this case, what should end()
       do? It's forced to run an O(N) to find the endpoint. Therefore, this optimization is not
       performed.
