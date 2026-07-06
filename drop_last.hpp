@@ -8,7 +8,191 @@ class drop_last_view : public view_interface<drop_last_view<V>> {
   V base_ = V();                     // exposition only
   range_difference_t<V> count_ = 0;  // exposition only
 
-  class iterator;    // exposition only
+  class iterator {
+   private:
+    iterator_t<V> current_ = iterator_t<V>();  // exposition only
+    iterator_t<V> probe_ = iterator_t<V>();    // exposition only
+    constexpr iterator(iterator_t<V> current, iterator_t<V> probe)
+      : current_(current), probe_(probe) { }  // exposition only
+
+   public:
+    using iterator_concept = decltype([] {
+      if constexpr (contiguous_range<V>)
+        return contiguous_iterator_tag{};
+      else if constexpr (random_access_range<V>)
+        return random_access_iterator_tag{};
+      else if constexpr (bidirectional_range<V>)
+        return bidirectional_iterator_tag{};
+      else
+        return forward_iterator_tag{};
+    }());
+    using iterator_category = decltype([] {
+      using C = iterator_traits<iterator_t<V>>::iterator_category;
+      if constexpr (derived_from<C, random_access_iterator_tag>)
+        return random_access_iterator_tag{};
+      else if constexpr (derived_from<C, bidirectional_iterator_tag>)
+        return bidirectional_iterator_tag{};
+      else
+        return forward_iterator_tag{};
+    }());
+    using value_type = range_value_t<V>;
+    using difference_type = range_difference_t<V>;
+
+    iterator() = default;
+
+    constexpr iterator_t<V>
+    base() const {
+      return current_;
+    }
+
+    constexpr range_reference_t<V>
+    operator*() const {
+      return *current_;
+    }
+
+    constexpr auto
+    operator->() const noexcept
+      requires contiguous_range<V>
+    {
+      return to_address(current_);
+    }
+
+    constexpr iterator&
+    operator++() {
+      ++current_;
+      ++probe_;
+      return *this;
+    }
+
+    constexpr iterator
+    operator++(int) {
+      auto tmp = *this;
+      ++*this;
+      return tmp;
+    }
+
+    constexpr iterator&
+    operator--()
+      requires bidirectional_range<V>
+    {
+      --current_;
+      --probe_;
+      return *this;
+    }
+
+    constexpr iterator
+    operator--(int)
+      requires bidirectional_range<V>
+    {
+      auto tmp = *this;
+      --*this;
+      return tmp;
+    }
+
+    constexpr iterator&
+    operator+=(difference_type n)
+      requires random_access_range<V>
+    {
+      current_ += n;
+      probe_ += n;
+      return *this;
+    }
+
+    constexpr iterator&
+    operator-=(difference_type n)
+      requires random_access_range<V>
+    {
+      current_ -= n;
+      probe_ -= n;
+      return *this;
+    }
+
+    constexpr decltype(auto)
+    operator[](difference_type n) const
+      requires random_access_range<V>
+    {
+      return current_[n];
+    }
+
+    friend constexpr bool
+    operator==(const iterator& x, const iterator& y) {
+      return x.current_ == y.current_;
+    }
+
+    friend constexpr bool
+    operator==(const iterator& x, const iterator_t<V>& y) {
+      return x.probe_ == y;
+    }
+
+    friend constexpr bool
+    operator<(const iterator& x, const iterator& y)
+      requires random_access_range<V>
+    {
+      return x.current_ < y.current_;
+    }
+
+    friend constexpr bool
+    operator>(const iterator& x, const iterator& y)
+      requires random_access_range<V>
+    {
+      return x.current_ > y.current_;
+    }
+
+    friend constexpr bool
+    operator<=(const iterator& x, const iterator& y)
+      requires random_access_range<V>
+    {
+      return x.current_ <= y.current_;
+    }
+
+    friend constexpr bool
+    operator>=(const iterator& x, const iterator& y)
+      requires random_access_range<V>
+    {
+      return x.current_ >= y.current_;
+    }
+
+    friend constexpr auto
+    operator<=>(const iterator& x, const iterator& y)
+      requires random_access_range<V> && three_way_comparable<iterator_t<V>>
+    {
+      return x.current_ <=> y.current_;
+    }
+
+    friend constexpr iterator
+    operator+(iterator i, difference_type n)
+      requires random_access_range<V>
+    {
+      return i += n;
+    }
+
+    friend constexpr iterator
+    operator+(difference_type n, iterator i)
+      requires random_access_range<V>
+    {
+      return i += n;
+    }
+
+    friend constexpr iterator
+    operator-(iterator i, difference_type n)
+      requires random_access_range<V>
+    {
+      return i -= n;
+    }
+
+    friend constexpr decltype(auto)
+    iter_move(const iterator& i) noexcept(noexcept(ranges::iter_move(i.current_))) {
+      return ranges::iter_move(i.current_);
+    }
+
+    friend constexpr void
+    iter_swap(const iterator& x,
+              const iterator& y) noexcept(noexcept(ranges::iter_swap(x.current_, y.current_)))
+      requires indirectly_swappable<iterator_t<V>, iterator_t<V>>
+    {
+      ranges::iter_swap(x.current_, y.current_);
+    }
+  };
 
  public:
   drop_last_view()
