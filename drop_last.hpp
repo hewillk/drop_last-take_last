@@ -120,7 +120,7 @@ class drop_last_view : public view_interface<drop_last_view<V>> {
     }
 
     friend constexpr bool
-    operator==(const iterator& x, const iterator_t<V>& y) {
+    operator==(const iterator& x, const sentinel_t<V>& y) {
       return x.probe_ == y;
     }
 
